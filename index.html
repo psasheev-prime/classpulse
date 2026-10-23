@@ -1,0 +1,135 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClassPulse | Student Assistant</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f1f5fb;color:#172554}
+header{background:#123b78;color:white;padding:22px}
+header h1{margin:0}
+header p{margin:7px 0 0;color:#dbeafe}
+nav{display:flex;gap:8px;overflow-x:auto;padding:12px;background:white;position:sticky;top:0}
+nav button{border:0;background:#e6efff;color:#123b78;padding:11px 14px;border-radius:9px;font-weight:bold;white-space:nowrap}
+nav button:hover{background:#123b78;color:white}
+main{max-width:950px;margin:auto;padding:18px}
+section{display:none}
+section.active{display:block}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+.card{background:white;padding:18px;border-radius:14px;box-shadow:0 3px 12px #102e5510}
+.card h3{margin-top:0}
+input,textarea,select{width:100%;padding:12px;margin:6px 0 12px;border:1px solid #cbd5e1;border-radius:8px;font:inherit}
+.action{background:#1763c6;color:white;border:0;padding:11px 15px;border-radius:8px;font-weight:bold}
+.item{background:white;margin:10px 0;padding:13px;border-radius:10px}
+small{color:#64748b}
+footer{text-align:center;padding:25px;color:#64748b}
+</style>
+</head>
+<body>
+<header>
+<h1>📘 ClassPulse</h1>
+<p>Mahendra Engineering College · Smart Student Assistant</p>
+</header>
+<nav>
+<button onclick="show('home')">Home</button>
+<button onclick="show('announcements')">Notices</button>
+<button onclick="show('timetable')">Timetable</button>
+<button onclick="show('attendance')">Attendance</button>
+<button onclick="show('assignments')">Assignments</button>
+<button onclick="show('feedback')">Feedback</button>
+<button onclick="show('notes')">Study Notes</button>
+</nav>
+<main>
+<section id="home" class="active">
+<h2>Welcome to ClassPulse 👋</h2>
+<p>Organize your college life in one place.</p>
+<div class="cards">
+<div class="card"><h3>📢 Notices</h3><p>College announcements</p></div>
+<div class="card"><h3>🗓️ Timetable</h3><p>View class schedules</p></div>
+<div class="card"><h3>📊 Attendance</h3><p>Track your percentage</p></div>
+<div class="card"><h3>📝 Assignments</h3><p>Manage your tasks</p></div>
+</div>
+<div class="item"><b>Project purpose</b><p>Help students manage academic activities more easily.</p></div>
+</section>
+
+<section id="announcements">
+<h2>📢 Announcements</h2>
+<p><small>Demo notices — not official college announcements.</small></p>
+<div id="noticeList"></div>
+<input id="notice" placeholder="Enter a new announcement">
+<button class="action" onclick="addNotice()">Add notice</button>
+</section>
+
+<section id="timetable">
+<h2>🗓️ Class Timetable</h2>
+<form id="timeForm">
+<label>Day</label><select id="day"><option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option><option>Saturday</option></select>
+<label>Subject</label><input id="subject" required placeholder="e.g. Mathematics">
+<label>Time</label><input id="period" required placeholder="e.g. 9:00–10:00 AM">
+<button class="action">Add class</button>
+</form>
+<div id="timeList"></div>
+</section>
+
+<section id="attendance">
+<h2>📊 Attendance Calculator</h2>
+<label>Total classes conducted</label><input type="number" id="total" min="0" value="20">
+<label>Classes attended</label><input type="number" id="attended" min="0" value="16">
+<button class="action" onclick="calculate()">Calculate attendance</button>
+<div class="item" id="result">Attendance: 80%</div>
+</section>
+
+<section id="assignments">
+<h2>📝 Assignments & Tasks</h2>
+<form id="taskForm">
+<label>Assignment</label><input id="task" required placeholder="Enter assignment name">
+<label>Due date</label><input type="date" id="due">
+<button class="action">Add assignment</button>
+</form>
+<div id="taskList"></div>
+</section>
+
+<section id="feedback">
+<h2>⭐ Student Feedback</h2>
+<form id="feedbackForm">
+<label>Rating</label><select id="rating"><option value="5">⭐⭐⭐⭐⭐ - Excellent</option><option value="4">⭐⭐⭐⭐ - Good</option><option value="3">⭐⭐⭐ - Average</option><option value="2">⭐⭐ - Needs improvement</option><option value="1">⭐ - Poor</option></select>
+<label>Comments</label><textarea id="comment" required placeholder="Share your feedback"></textarea>
+<button class="action">Submit feedback</button>
+</form>
+<div id="feedbackList"></div>
+</section>
+
+<section id="notes">
+<h2>📚 Study Notes</h2>
+<label>Write or paste your notes</label>
+<textarea id="studyNotes" rows="7" placeholder="Type your study notes here..."></textarea>
+<button class="action" onclick="saveNotes()">Save notes</button>
+<p id="savedMessage"></p>
+</section>
+</main>
+<footer>ClassPulse · Student project prototype</footer>
+<script>
+const $=id=>document.getElementById(id);
+function show(id){document.querySelectorAll('main section').forEach(s=>s.classList.remove('active'));$(id).classList.add('active')}
+function getData(key){try{return JSON.parse(localStorage.getItem('cp-'+key)||'[]')}catch{return []}}
+function setData(key,data){localStorage.setItem('cp-'+key,JSON.stringify(data))}
+function render(key,target,formatter){$(target).innerHTML=getData(key).map(formatter).join('')}
+function addNotice(){let v=$('notice').value.trim();if(!v)return;let a=getData('notices');a.unshift(v);setData('notices',a);$('notice').value='';drawNotices()}
+function drawNotices(){render('notices','noticeList',v=>'<div class="item">📢 '+escapeHtml(v)+'</div>')}
+function escapeHtml(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+$('timeForm').addEventListener('submit',e=>{e.preventDefault();let a=getData('times');a.push({day:$('day').value,subject:$('subject').value,period:$('period').value});setData('times',a);e.target.reset();drawTimes()})
+function drawTimes(){render('times','timeList',v=>'<div class="item"><b>'+escapeHtml(v.day)+' — '+escapeHtml(v.subject)+'</b><p>'+escapeHtml(v.period)+'</p></div>')}
+function calculate(){let t=Number($('total').value),a=Number($('attended').value);if(t<=0||a<0||a>t){$('result').textContent='Please enter valid class numbers.';return}let p=Math.round(a/t*100);$('result').textContent='Attendance: '+p+'%'+(p<75?' — Below 75% target.':' — At or above 75% target.')}
+$('taskForm').addEventListener('submit',e=>{e.preventDefault();let a=getData('tasks');a.push({name:$('task').value,due:$('due').value,done:false});setData('tasks',a);e.target.reset();drawTasks()})
+function drawTasks(){render('tasks','taskList',v=>'<div class="item">'+(v.done?'✅ ':'📝 ')+escapeHtml(v.name)+(v.due?' · Due: '+escapeHtml(v.due):'')+'</div>')}
+$('feedbackForm').addEventListener('submit',e=>{e.preventDefault();let a=getData('feedback');a.unshift({rating:$('rating').value,comment:$('comment').value});setData('feedback',a);e.target.reset();drawFeedback()})
+function drawFeedback(){render('feedback','feedbackList',v=>'<div class="item">'+('⭐'.repeat(Number(v.rating)))+'<p>'+escapeHtml(v.comment)+'</p></div>')}
+function saveNotes(){localStorage.setItem('cp-notes',$('studyNotes').value);$('savedMessage').textContent='Notes saved on this device.'}
+function loadNotes(){$('studyNotes').value=localStorage.getItem('cp-notes')||''}
+function drawAll(){drawNotices();drawTimes();drawTasks();drawFeedback();loadNotes();calculate()}
+drawAll();
+</script>
+</body>
+</html>
